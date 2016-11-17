@@ -150,6 +150,21 @@ impl<'r, 'a, 'b: 'a> Request<'r, 'a, 'b> {
         self.args.as_ref().unwrap()
     }
 
+    /// The parsed URL parameters.
+    pub fn args_mut(&mut self) -> &mut MultiDict<String> {
+        if self.args.is_none() {
+            let mut args = MultiDict::new();
+            if let Some(query) = self.query_string() {
+                let pairs = form_urlencoded::parse(query.as_bytes());
+                for (k, v) in pairs.into_owned() {
+                    args.add(k, v);
+                }
+            }
+            self.args = Some(args);
+        }
+        self.args.as_mut().unwrap()
+    }
+
     /// Get content type.
     fn content_type(&self) -> Option<ContentType> {
         let content_type: Option<&ContentType> = self.request.headers.get();
@@ -177,7 +192,7 @@ impl<'r, 'a, 'b: 'a> Request<'r, 'a, 'b> {
     }
 
     /// This method is used internally to retrieve submitted data.
-    fn load_form_data(&mut self) {
+    pub fn load_form_data(&mut self) {
         if self.form.is_some() {
             return
         }
@@ -195,15 +210,23 @@ impl<'r, 'a, 'b: 'a> Request<'r, 'a, 'b> {
     }
 
     /// The form parameters.
-    pub fn form(&mut self) -> &MultiDict<String> {
+    pub fn form_mut(&mut self) -> &mut MultiDict<String> {
         self.load_form_data();
-        self.form.as_ref().unwrap()
+        self.form.as_mut().unwrap()
     }
 
     /// All uploaded files.
-    pub fn files(&mut self) -> &MultiDict<FilePart> {
+    pub fn files_mut(&mut self) -> &mut MultiDict<FilePart> {
         self.load_form_data();
-        self.files.as_ref().unwrap()
+        self.files.as_mut().unwrap()
+    }
+
+    pub fn files(&self) -> Option<&MultiDict<FilePart>> {
+        self.files.as_ref()
+    }
+
+    pub fn form(&self) -> Option<&MultiDict<String>> {
+        self.form.as_ref()
     }
 
     /// The headers.

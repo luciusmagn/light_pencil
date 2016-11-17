@@ -55,6 +55,15 @@ impl<T> MultiDict<T> {
         }
     }
 
+
+    /// Remove the first value for this key and return it.
+    pub fn take(&mut self, key: &str) -> Option<T> {
+        match self.map.get_mut(&key.to_string()) {
+            Some(value) => Some(value.swap_remove(0)),
+            None => None
+        }
+    }
+
     /// Removes an existing key first and add the value.
     pub fn set(&mut self, key: &str, value: T) {
         self.map.insert(key.to_string(), vec![value]);
