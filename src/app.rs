@@ -632,5 +632,5 @@ fn send_app_static_file(request: &mut Request) -> PencilResult {
     static_path.push(&request.app.static_folder);
     let static_path_str = static_path.to_str().unwrap();
     let filename = request.view_args.get("filename").unwrap();
-    send_from_directory(static_path_str, filename, false)
+    send_from_directory(static_path_str, filename, false, request.headers().get())
 }

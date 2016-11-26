@@ -177,7 +177,7 @@ fn send_module_static_file(request: &mut Request) -> PencilResult {
                 static_path.push(module_static_folder);
                 let static_path_str = static_path.to_str().unwrap();
                 let filename = request.view_args.get("filename").unwrap();
-                return send_from_directory(static_path_str, filename, false);
+                return send_from_directory(static_path_str, filename, false, request.headers().get());
             }
         }
     }

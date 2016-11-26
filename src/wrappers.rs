@@ -6,6 +6,7 @@ use std::net::SocketAddr;
 use std::io;
 use std::fs::File;
 use std::io::{Read, Write};
+use std::io::Take;
 use std::convert;
 
 use hyper;
@@ -368,6 +369,12 @@ impl<'a> BodyWrite for &'a str {
 }
 
 impl BodyWrite for File {
+    fn write_body(&mut self, body: &mut ResponseBody) -> io::Result<()> {
+        io::copy(self, body).map(|_| ())
+    }
+}
+
+impl BodyWrite for Take<File> {
     fn write_body(&mut self, body: &mut ResponseBody) -> io::Result<()> {
         io::copy(self, body).map(|_| ())
     }

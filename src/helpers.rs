@@ -3,8 +3,12 @@
 use std::error::Error;
 use std::fs::File;
 use std::path::{Path, PathBuf};
+use std::io::{Seek, Read};
+use std::io::SeekFrom::{End, Start};
 
-use hyper::header::{Location, ContentType};
+use hyper::header::{Location, ContentType, Range, ContentRange, ContentLength};
+use hyper::header::ByteRangeSpec::{FromTo, Last, AllFrom};
+use hyper::header::ContentRangeSpec::{Bytes};
 use mime_guess::guess_mime_type;
 use mime::Mime;
 
@@ -101,18 +105,64 @@ pub fn escape(s: String) -> String {
 /// function from user sources without checking them first.  Set `as_attachment` to
 /// `true` if you want to send this file with a `Content-Disposition: attachment`
 /// header.  This will return `NotFound` if filepath is not one file.
-pub fn send_file(filepath: &str, mimetype: Mime, as_attachment: bool) -> PencilResult {
+pub fn send_file(filepath: &str, mimetype: Mime, as_attachment: bool, range: Option<&Range>) -> PencilResult {
     let filepath = Path::new(filepath);
     if !filepath.is_file() {
         return Err(PenHTTPError(NotFound));
     }
-    let file = match File::open(&filepath) {
+    let mut file = match File::open(&filepath) {
         Ok(file) => file,
         Err(e) => {
             return Err(UserError::new(format!("couldn't open {}: {}", filepath.display(), e.description())).into());
         }
     };
-    let mut response: Response = file.into();
+    let len = file.metadata().map_err(|_| PenHTTPError(HTTPError::InternalServerError))?.len();
+    let mut response: Response = match range {
+        Some(&Range::Bytes(ref vec_ranges)) => {
+            if vec_ranges.len() != 1 { return Err(PenHTTPError(HTTPError::NotImplemented)) };
+            match vec_ranges[0] {
+                FromTo(s, e) => {
+                    file.seek(Start(s))
+                        .map_err(|_| PenHTTPError(HTTPError::InternalServerError))?;
+                    let mut resp = Response::new(file.take(e-s+1));
+                    resp.status_code = 206;
+                    resp.headers.set(ContentLength(e-s+1));
+                    resp.headers.set(ContentRange(
+                        Bytes{range: Some((s, e)), instance_length: Some(len)}
+                    ));
+                    resp
+                },
+                AllFrom(s) => {
+                    file.seek(Start(s))
+                        .map_err(|_| PenHTTPError(HTTPError::InternalServerError))?;
+                    let mut resp = Response::new(file);
+                    resp.status_code = 206;
+                    resp.headers.set(ContentLength(len-s));
+                    resp.headers.set(ContentRange(
+                        Bytes{range: Some((s, len-1)), instance_length: Some(len)}
+                    ));
+                    resp
+                },
+                Last(l) => {
+                    file.seek(End(-(l as i64)))
+                        .map_err(|_| PenHTTPError(HTTPError::InternalServerError))?;
+                    let mut resp = Response::new(file);
+                    resp.status_code = 206;
+                    resp.headers.set(ContentLength(l));
+                    resp.headers.set(ContentRange(
+                        Bytes{range: Some((len-l, len-1)), instance_length: Some(len)}
+                    ));
+                    resp
+                },
+            }
+        },
+        Some(_) => return Err(PenHTTPError(HTTPError::NotImplemented)),
+        None => {
+            let mut resp = Response::new(file);
+            resp.headers.set(ContentLength(len));
+            resp
+        },
+    };
     response.headers.set(ContentType(mimetype));
     if as_attachment {
         match filepath.file_name() {
@@ -140,13 +190,13 @@ pub fn send_file(filepath: &str, mimetype: Mime, as_attachment: bool) -> PencilR
 /// quickly expose static files from an folder.  This will guess the mimetype
 /// for you.
 pub fn send_from_directory(directory: &str, filename: &str,
-                           as_attachment: bool) -> PencilResult {
+                           as_attachment: bool, range: Option<&Range>) -> PencilResult {
     match safe_join(directory, filename) {
         Some(filepath) => {
             let mimetype = guess_mime_type(filepath.as_path());
             match filepath.as_path().to_str() {
                 Some(filepath) => {
-                    send_file(filepath, mimetype, as_attachment)
+                    send_file(filepath, mimetype, as_attachment, range)
                 },
                 None => {
                     Err(PenHTTPError(NotFound))
