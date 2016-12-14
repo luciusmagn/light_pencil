@@ -49,7 +49,7 @@ impl<T> MultiDict<T> {
 
     /// Return the first value for this key.
     pub fn get(&self, key: &str) -> Option<&T> {
-        match self.map.get(&key.to_string()) {
+        match self.map.get(key) {
             Some(value) => Some(&value[0]),
             None => None
         }
@@ -58,8 +58,16 @@ impl<T> MultiDict<T> {
 
     /// Remove the first value for this key and return it.
     pub fn take(&mut self, key: &str) -> Option<T> {
-        match self.map.get_mut(&key.to_string()) {
+        match self.map.get_mut(key) {
             Some(value) => Some(value.swap_remove(0)),
+            None => None
+        }
+    }
+
+    /// Remove the first value for this key and return it.
+    pub fn take_all(&mut self, key: &str) -> Option<Vec<T>> {
+        match self.map.remove(key) {
+            Some(value) => Some(value),
             None => None
         }
     }
@@ -84,7 +92,7 @@ impl<T> MultiDict<T> {
 
     /// Return the list of items for a given key.
     pub fn getlist(&self, key: &str) -> Option<&Vec<T>> {
-        self.map.get(&key.to_string())
+        self.map.get(key)
     }
     
     /// An iterator of `(key, value)` pairs.
