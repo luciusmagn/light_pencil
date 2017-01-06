@@ -46,7 +46,7 @@ pub struct Request<'r, 'a, 'b: 'a> {
     pub routing_error: Option<HTTPError>,
     /// Storage for data of extensions.
     pub extensions_data: TypeMap,
-    url: Url,
+    pub url: Url,
     host: hyper::header::Host,
     args: Option<MultiDict<String>>,
     form: Option<MultiDict<String>>,
