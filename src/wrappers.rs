@@ -256,6 +256,11 @@ impl<'r, 'a, 'b: 'a> Request<'r, 'a, 'b> {
         get_host_value(&self.host)
     }
 
+    /// The host including the port if available.
+    pub fn host_domain(&self) -> &str {
+        &self.host.hostname
+    }
+
     /// The query string.
     pub fn query_string(&self) -> Option<String> {
         self.url.query().map(|q| q.to_owned())
