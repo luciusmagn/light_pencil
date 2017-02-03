@@ -11,7 +11,7 @@ use std::convert;
 
 use hyper;
 use hyper::uri::RequestUri::{AbsolutePath, AbsoluteUri, Authority, Star};
-use hyper::header::{Headers, ContentLength, ContentType, Cookie};
+use hyper::header::{Headers, ContentLength, ContentType};
 use hyper::mime::Mime;
 use hyper::method::Method;
 use url::Url;
@@ -28,6 +28,8 @@ use routing::{Rule, MapAdapterMatched, MapAdapter};
 use types::ViewArgs;
 use http_errors::HTTPError;
 use formparser::FormDataParser;
+
+pub use hyper::header::{Cookie, CookiePair, SetCookie};
 
 
 /// Request type.

@@ -59,7 +59,7 @@ extern crate mime;
 extern crate mime_guess;
 
 /* public api */
-pub use app::Pencil;
+pub use app::{Pencil, Handlebars};
 pub use types::{
     PencilError,
         PenHTTPError,
@@ -77,6 +77,9 @@ pub use types::{
 pub use wrappers::{
     Request,
     Response,
+    Cookie,
+    SetCookie,
+    CookiePair,
 };
 pub use http_errors::{
     HTTPError

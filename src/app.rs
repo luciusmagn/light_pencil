@@ -11,7 +11,7 @@ use std::net::ToSocketAddrs;
 
 use rustc_serialize::json::Json;
 use rustc_serialize::json::ToJson;
-use handlebars::Handlebars;
+pub use handlebars::Handlebars;
 use hyper;
 use hyper::method::Method;
 use hyper::status::StatusCode;
