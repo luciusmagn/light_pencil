@@ -11,11 +11,11 @@ documentation = "http://fengsp.github.io/pencil/"
 description = "A micro web framework for Rust."
 
 [dependencies]
-regex = "0.1.74"
+regex = "0.2"
 rustc-serialize = "0.3.19"
 url = "1.2.0"
 log = "0.3.6"
-handlebars = "0.16.1"
+handlebars = "0.25"
 typemap = "0.3.3"
 mime = "0.2.2"
 mime_guess = "1.8.0"
