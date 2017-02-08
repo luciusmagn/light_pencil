@@ -29,7 +29,7 @@ use types::ViewArgs;
 use http_errors::HTTPError;
 use formparser::FormDataParser;
 
-pub use hyper::header::{Cookie, CookiePair, SetCookie};
+pub use hyper::header::{Cookie, SetCookie};
 
 
 /// Request type.

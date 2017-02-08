@@ -79,7 +79,6 @@ pub use wrappers::{
     Response,
     Cookie,
     SetCookie,
-    CookiePair,
 };
 pub use http_errors::{
     HTTPError
