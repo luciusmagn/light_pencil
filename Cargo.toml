@@ -15,7 +15,7 @@ regex = "0.2"
 rustc-serialize = "0.3.19"
 url = "1.2.0"
 log = "0.3.6"
-handlebars = "0.20"
+handlebars = { version = "0.25", features = ["partial_legacy"] }
 typemap = "0.3.3"
 mime = "0.2.2"
 mime_guess = "1.8.0"
