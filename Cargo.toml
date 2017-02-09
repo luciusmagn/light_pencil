@@ -19,10 +19,5 @@ handlebars = "0.25"
 typemap = "0.3.3"
 mime = "0.2.2"
 mime_guess = "1.8.0"
-
-[dependencies.hyper]
-version = "0.10"
-default_features = false
-
-[dependencies.formdata]
-git = "https://github.com/golddranks/formdata"
+hyper = "0.10"
+formdata = "0.12"
