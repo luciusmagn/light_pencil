@@ -204,9 +204,6 @@ impl Rule {
     pub fn matched(&self, path: &str) -> Option<Result<ViewArgs, RequestSlashError>> {
         match self.matcher.regex.captures(path) {
             Some(caps) => {
-                if let None = caps.name("__suffix__") {
-                    return Some(Err(RequestSlashError));
-                }
                 let mut view_args: HashMap<String, String> = HashMap::new();
                 for variable in self.matcher.regex.capture_names() {
                     if let Some(variable) = variable {
