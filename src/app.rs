@@ -217,6 +217,14 @@ impl Pencil {
         self.route(rule_str, &[Method::Get], "static", send_app_static_file);
     }
 
+    /// Enables static file handling.
+    pub fn enable_static_file_handling_with_cache(&mut self) {
+        let mut rule = self.static_url_path.clone();
+        rule = rule + "/<filename:path>";
+        let rule_str: &str = &rule;
+        self.route(rule_str, &[Method::Get], "static", send_app_static_file_with_cache);
+    }
+
     /// Registers a function to run before each request.
     pub fn before_request(&mut self, f: BeforeRequestFunc) {
         self.before_request_funcs.push(f);
@@ -639,4 +647,44 @@ fn send_app_static_file(request: &mut Request) -> PencilResult {
     let static_path_str = static_path.to_str().unwrap();
     let filename = request.view_args.get("filename").unwrap();
     send_from_directory(static_path_str, filename, false, request.headers().get())
+}
+
+use hyper::header::{IfModifiedSince, LastModified, HttpDate};
+use time;
+
+lazy_static! {
+
+    pub static ref TIME_AT_SERVER_START : time::Tm = { let mut tm = time::now_utc(); tm.tm_nsec = 0; tm };
+
+}
+
+pub fn check_if_cached(req: &mut Request) -> Option<PencilResult> {
+
+    match req.headers().get::<IfModifiedSince>() {
+        Some(&IfModifiedSince(HttpDate(tm))) if tm >= *TIME_AT_SERVER_START => {
+            let mut cached_resp = Response::new_empty();
+            cached_resp.status_code = 304;
+            return Some(Ok(cached_resp));
+        },
+        None => { // No caching requested
+            return None;
+        },
+        Some(_) => { // Stale cache
+            return None;
+        }
+    }
+}
+
+/// View function used internally to send static files from the static folder
+/// to the browser. Using cache, and serving 304 Not Modified if possible.
+fn send_app_static_file_with_cache(request: &mut Request) -> PencilResult {
+    if let Some(resp) = check_if_cached(request) {
+        return resp;
+    }
+    let mut static_path = PathBuf::from(&request.app.root_path);
+    static_path.push(&request.app.static_folder);
+    let static_path_str = static_path.to_str().unwrap();
+    let filename = request.view_args.get("filename").unwrap();
+    let resp = send_from_directory(static_path_str, filename, false, request.headers().get());
+    resp.map(|mut r| { r.headers.set(LastModified(HttpDate(*TIME_AT_SERVER_START))); r })
 }

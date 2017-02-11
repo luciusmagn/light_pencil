@@ -47,6 +47,9 @@
 #![deny(non_camel_case_types)]
 
 #[macro_use]
+extern crate lazy_static;
+extern crate time;
+#[macro_use]
 extern crate log;
 extern crate hyper;
 extern crate rustc_serialize;
