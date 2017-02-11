@@ -218,10 +218,11 @@ impl Pencil {
     }
 
     /// Enables static file handling.
-    pub fn enable_static_file_handling_with_cache(&mut self) {
+    pub fn enable_static_file_handling_with_cache(&mut self, max_age: ::std::time::Duration) {
         let mut rule = self.static_url_path.clone();
         rule = rule + "/<filename:path>";
         let rule_str: &str = &rule;
+        MAX_AGE.store(max_age.as_secs() as usize, Ordering::Relaxed);
         self.route(rule_str, &[Method::Get], "static", send_app_static_file_with_cache);
     }
 
@@ -649,16 +650,17 @@ fn send_app_static_file(request: &mut Request) -> PencilResult {
     send_from_directory(static_path_str, filename, false, request.headers().get())
 }
 
-use hyper::header::{IfModifiedSince, LastModified, HttpDate};
+use hyper::header::{IfModifiedSince, LastModified, HttpDate, CacheControl, CacheDirective};
 use time;
+use std::sync::atomic::{Ordering, AtomicUsize};
 
 lazy_static! {
+    pub static ref TIME_AT_SERVER_START: time::Tm = { let mut tm = time::now_utc(); tm.tm_nsec = 0; tm };
 
-    pub static ref TIME_AT_SERVER_START : time::Tm = { let mut tm = time::now_utc(); tm.tm_nsec = 0; tm };
-
+    pub static ref MAX_AGE: AtomicUsize = AtomicUsize::new(0);
 }
 
-pub fn check_if_cached(req: &mut Request) -> Option<PencilResult> {
+fn check_if_cached(req: &mut Request) -> Option<PencilResult> {
 
     match req.headers().get::<IfModifiedSince>() {
         Some(&IfModifiedSince(HttpDate(tm))) if tm >= *TIME_AT_SERVER_START => {
@@ -686,5 +688,12 @@ fn send_app_static_file_with_cache(request: &mut Request) -> PencilResult {
     let static_path_str = static_path.to_str().unwrap();
     let filename = request.view_args.get("filename").unwrap();
     let resp = send_from_directory(static_path_str, filename, false, request.headers().get());
-    resp.map(|mut r| { r.headers.set(LastModified(HttpDate(*TIME_AT_SERVER_START))); r })
+    resp.map(|mut r| {
+        r.headers.set(LastModified(HttpDate(*TIME_AT_SERVER_START)));
+        let max_age = MAX_AGE.load(Ordering::Relaxed) as u32;
+        if max_age > 0 {
+            r.headers.set(CacheControl(vec![CacheDirective::MaxAge(max_age)]));
+        }
+        r
+    })
 }
