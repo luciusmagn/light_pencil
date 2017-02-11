@@ -584,7 +584,12 @@ impl Pencil {
 
     /// Runs the application on a hyper HTTP server.
     pub fn run<A: ToSocketAddrs>(self, addr: A) {
-        run_server(self, addr);
+        run_server(self, addr, 25);
+    }
+
+    /// Runs the application on a hyper HTTP server.
+    pub fn run_threads<A: ToSocketAddrs>(self, addr: A, threads: usize) {
+        run_server(self, addr, threads);
     }
 }
 
