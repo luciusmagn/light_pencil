@@ -691,9 +691,11 @@ fn send_app_static_file_with_cache(request: &mut Request) -> PencilResult {
     resp.map(|mut r| {
         r.headers.set(LastModified(HttpDate(*TIME_AT_SERVER_START)));
         let max_age = MAX_AGE.load(Ordering::Relaxed) as u32;
+        debug!("max_age: {}", max_age);
         if max_age > 0 {
             r.headers.set(CacheControl(vec![CacheDirective::MaxAge(max_age)]));
         }
+        debug!("r: {:?}", r);
         r
     })
 }
