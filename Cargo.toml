@@ -12,13 +12,14 @@ description = "A micro web framework for Rust."
 
 [dependencies]
 regex = "0.2"
-rustc-serialize = "0.3.19"
-url = "1.2.0"
-log = "0.3.6"
-handlebars = { version = "0.25", features = ["partial_legacy"] }
-typemap = "0.3.3"
-mime = "0.2.2"
-mime_guess = "1.8.0"
+serde = "0.9"
+serde_json = "0.9"
+url = "1.2"
+log = "0.3"
+handlebars = { version = "0.25", features = ["partial_legacy", "serde_type"] }
+typemap = "0.3"
+mime = "0.2"
+mime_guess = "1.8"
 hyper = "0.10"
 formdata = "0.12"
 lazy_static = "0.2"
