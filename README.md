@@ -18,3 +18,4 @@ fn main() {
 ```
 
 One simple guide: https://fengsp.github.io/blog/2016/3/introducing-pencil/
+Documentation: https://fengsp.github.io/pencil/pencil/
